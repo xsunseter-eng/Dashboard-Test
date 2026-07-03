@@ -1,14 +1,14 @@
 ---
-title: Streamlit Template Space
+title: SimularityGui
 emoji: 🚀
 colorFrom: red
 colorTo: red
 sdk: docker
 app_port: 8501
 tags:
-  - streamlit
+- streamlit
 pinned: false
-short_description: Streamlit template space
+short_description: For Personal Project
 ---
 
 # Welcome to Streamlit!
