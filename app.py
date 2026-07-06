@@ -4,6 +4,7 @@ import plotly.graph_objects as pl
 import numpy as np
 from PIL import Image
 import os
+from streamlit_plotly_events import plotly_events
 
 
 st.set_page_config(page_title="Loop Closure Analysis Tool", layout="wide")
@@ -124,6 +125,27 @@ if S is None or E is None:
     st.error(f"Could not load matrices from {selected_seq['resultDir']}.")
     st.stop()
 
+# Initialize session state for sliders and inputs
+if "row_val_input" not in st.session_state:
+    st.session_state.row_val_input = 0
+if "row_val_slider" not in st.session_state:
+    st.session_state.row_val_slider = 0
+if "col_val_input" not in st.session_state:
+    st.session_state.col_val_input = 0
+if "col_val_slider" not in st.session_state:
+    st.session_state.col_val_slider = 0
+if "last_clicked_point" not in st.session_state:
+    st.session_state.last_clicked_point = None
+
+def sync_row_input():
+    st.session_state.row_val_slider = st.session_state.row_val_input
+def sync_row_slider():
+    st.session_state.row_val_input = st.session_state.row_val_slider
+def sync_col_input():
+    st.session_state.col_val_slider = st.session_state.col_val_input
+def sync_col_slider():
+    st.session_state.col_val_input = st.session_state.col_val_slider
+
 # Info Label placeholder
 info_placeholder = st.empty()
 
@@ -148,19 +170,8 @@ with col1:
         height=500
     )
     
-    # Add an invisible scatter plot on top of the Heatmap to capture click events in Streamlit natively!
-    X, Y = np.meshgrid(np.arange(S.shape[1]), np.arange(S.shape[0]))
-    fig_sim.add_trace(pl.Scattergl(
-        x=X.flatten(),
-        y=Y.flatten(),
-        mode='markers',
-        marker=dict(size=10, color='rgba(0,0,0,0)'),
-        hoverinfo='none',
-        showlegend=False
-    ))
-    
-    # Render with Streamlit's on_select
-    event = st.plotly_chart(fig_sim, width="stretch", on_select="rerun", selection_mode="points")
+    # Render with streamlit_plotly_events
+    selected_points = plotly_events(fig_sim, click_event=True, select_event=False, hover_event=False)
 
 with col2:
     st.subheader("Energy Matrix")
@@ -168,16 +179,19 @@ with col2:
     # Plotly Surface for Energy
     fig_energy = pl.Figure(data=[pl.Surface(z=E, colorscale='Viridis')])
     
-    # If a point is selected on the heatmap, add a scatter3d marker to the surface plot
-    selected_row = None
-    selected_col = None
+    # If a point is selected on the heatmap, update session state
+    if len(selected_points) > 0:
+        point = selected_points[0]
+        if st.session_state.last_clicked_point != point:
+            st.session_state.last_clicked_point = point
+            st.session_state.row_val_input = int(point["y"])
+            st.session_state.row_val_slider = int(point["y"])
+            st.session_state.col_val_input = int(point["x"])
+            st.session_state.col_val_slider = int(point["x"])
+            
+    selected_row = st.session_state.row_val_input
+    selected_col = st.session_state.col_val_input
     
-    if event and event.selection and "points" in event.selection and len(event.selection["points"]) > 0:
-        point = event.selection["points"][0]
-        # Plotly returns x and y. Heatmap x is col, y is row.
-        selected_col = point["x"]
-        selected_row = point["y"]
-        
     if selected_col is not None and selected_row is not None:
         energy_val = E[selected_row, selected_col]
         fig_energy.add_trace(pl.Scatter3d(
@@ -200,25 +214,26 @@ with col2:
 st.divider()
 
 st.subheader("Frame Selection")
-st.markdown("If clicking on the heatmap doesn't work (due to browser compatibility), use the selectors below:")
 sel_col1, sel_col2 = st.columns(2)
 
-# Set defaults from click event if available, otherwise 0
-default_row = 0
-default_col = 0
-if selected_row is not None:
-    default_row = int(selected_row)
-if selected_col is not None:
-    default_col = int(selected_col)
+# Ensure session state doesn't exceed new sequence bounds
+if st.session_state.row_val_input >= S.shape[0]:
+    st.session_state.row_val_input = S.shape[0] - 1
+    st.session_state.row_val_slider = S.shape[0] - 1
+if st.session_state.col_val_input >= S.shape[1]:
+    st.session_state.col_val_input = S.shape[1] - 1
+    st.session_state.col_val_slider = S.shape[1] - 1
 
 with sel_col1:
-    manual_row = st.number_input("Row", min_value=0, max_value=S.shape[0]-1, value=default_row)
+    st.number_input("Row", min_value=0, max_value=S.shape[0]-1, key="row_val_input", on_change=sync_row_input)
+    st.slider("Row", min_value=0, max_value=S.shape[0]-1, key="row_val_slider", on_change=sync_row_slider, label_visibility="collapsed")
 with sel_col2:
-    manual_col = st.number_input("Column", min_value=0, max_value=S.shape[1]-1, value=default_col)
+    st.number_input("Column", min_value=0, max_value=S.shape[1]-1, key="col_val_input", on_change=sync_col_input)
+    st.slider("Column", min_value=0, max_value=S.shape[1]-1, key="col_val_slider", on_change=sync_col_slider, label_visibility="collapsed")
 
 # Always use the manual inputs as the source of truth for display
-display_row = int(manual_row)
-display_col = int(manual_col)
+display_row = st.session_state.row_val_input
+display_col = st.session_state.col_val_input
 
 col_img1, col_img2 = st.columns(2)
 
