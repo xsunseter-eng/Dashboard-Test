@@ -9,26 +9,27 @@ import os
 st.set_page_config(page_title="Loop Closure Analysis Tool", layout="wide")
 
 # ========================================================================
-# Dataset Configuration (Hugging Face Mount)
+# Dataset Configuration (Hugging Face Auto-Download)
 # ========================================================================
+import os
 
-# If deployed on Hugging Face with a mounted dataset, the data will be in /data.
-# Otherwise, we fallback to the local directory.
-DATASET_MOUNT_PATH = "/data"
-
-# ========================================================================
-# Sequence Definitions
-# ========================================================================
-
-# For local development, we point to the parent directory where accelerated_features is located.
-# When deploying to HuggingFace, you can move 'accelerated_features' inside 'hf_space' and update these paths.
 BASE_DIR = os.path.dirname(__file__)
 ACCELERATED_FEATURES_DIR = os.path.join(BASE_DIR, "accelerated_features")
+NETVLAD_DIR = BASE_DIR
 
-if os.path.exists(DATASET_MOUNT_PATH):
-    NETVLAD_DIR = DATASET_MOUNT_PATH
-else:
-    NETVLAD_DIR = BASE_DIR
+target_folder = os.path.join(NETVLAD_DIR, "spot_forest_hard_data_images_rgb")
+if not os.path.exists(target_folder):
+    print("Local image folder not found. Downloading from Hugging Face Dataset...")
+    try:
+        from huggingface_hub import snapshot_download
+        snapshot_download(
+            repo_id="Umutsoo/SimularityGui-Data",
+            repo_type="dataset",
+            local_dir=NETVLAD_DIR
+        )
+        print("Download complete!")
+    except Exception as e:
+        print(f"Failed to download dataset: {e}")
 
 sequences = [
     {
