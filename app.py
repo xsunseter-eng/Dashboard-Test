@@ -185,6 +185,20 @@ with col1:
     # Render with Streamlit's native on_select
     event_2d = st.plotly_chart(fig_sim, width="stretch", on_select="rerun", selection_mode="points")
 
+    # If a point is selected on the heatmap, update session state
+    if event_2d and event_2d.selection and "points" in event_2d.selection and len(event_2d.selection["points"]) > 0:
+        point = event_2d.selection["points"][0]
+        clicked_x = int(point["x"])
+        clicked_y = int(point["y"])
+        
+        # Avoid unnecessary state updates to prevent slider jitter
+        if st.session_state.col_val_input != clicked_x or st.session_state.row_val_input != clicked_y:
+            st.session_state.col_val_input = clicked_x
+            st.session_state.col_val_slider = clicked_x
+            st.session_state.row_val_input = clicked_y
+            st.session_state.row_val_slider = clicked_y
+            st.rerun()
+
 with col2:
     st.subheader("Energy Matrix")
     
