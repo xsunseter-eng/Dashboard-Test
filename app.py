@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 import os
 from streamlit_image_comparison import image_comparison
-from streamlit_echarts import st_echarts
+from streamlit_plotly_events import plotly_events
 
 
 st.set_page_config(page_title="Loop Closure Analysis Tool", layout="wide")
@@ -189,43 +189,20 @@ with col1:
 with col2:
     st.subheader("Energy Matrix")
     
-    # Downsample factor to improve performance in 3D WebGL (max ~100x100 grid)
-    ds = max(1, E.shape[0] // 100)
+    # Sıkıştırma (Downsample) 40 bin noktanın çökmesini önlemek için
+    ds = max(1, E.shape[0] // 50) # Maksimum 50x50'lik bir matris oluştur
     
     X_e, Y_e = np.meshgrid(np.arange(E.shape[1]), np.arange(E.shape[0]))
     X_e_ds = X_e[::ds, ::ds]
     Y_e_ds = Y_e[::ds, ::ds]
     E_ds = E[::ds, ::ds]
     
-    data = []
-    for i in range(E_ds.shape[0]):
-        for j in range(E_ds.shape[1]):
-            data.append([int(X_e_ds[i, j]), int(Y_e_ds[i, j]), float(E_ds[i, j])])
-            
-    options = {
-        "tooltip": {},
-        "visualMap": {
-            "show": False,
-            "dimension": 2,
-            "min": float(np.min(E)),
-            "max": float(np.max(E)),
-            "inRange": {"color": ["#440154", "#482878", "#3e4a89", "#31688e", "#26828e", "#1f9e89", "#35b779", "#6ece58", "#b5de2b", "#fde725"]}
-        },
-        "xAxis3D": {"type": "value", "name": "Col"},
-        "yAxis3D": {"type": "value", "name": "Row"},
-        "zAxis3D": {"type": "value", "name": "Energy"},
-        "grid3D": {
-            "viewControl": {"projection": "perspective"},
-            "boxWidth": 100,
-            "boxDepth": 100,
-            "boxHeight": 50,
-        },
-        "series": [{
-            "type": "surface",
-            "wireframe": {"show": False},
-            "data": data
-        }]
-    }
+    fig_energy = pl.Figure(data=[pl.Surface(
+        x=X_e_ds, 
+        y=Y_e_ds, 
+        z=E_ds, 
+        colorscale='Viridis'
+    )])
     
     selected_row = st.session_state.row_val_input
     selected_col = st.session_state.col_val_input
@@ -233,30 +210,38 @@ with col2:
     if selected_col is not None and selected_row is not None:
         try:
             energy_val = float(E[selected_row, selected_col])
-            options["series"].append({
-                "type": "scatter3D",
-                "data": [[selected_col, selected_row, energy_val]],
-                "symbolSize": 10,
-                "itemStyle": {"color": "red"}
-            })
+            fig_energy.add_trace(pl.Scatter3d(
+                x=[selected_col],
+                y=[selected_row],
+                z=[energy_val],
+                mode='markers',
+                marker=dict(size=8, color='red', symbol='circle'),
+                name='Selected'
+            ))
         except IndexError:
             pass
 
-    events = {
-        "click": "function(params) { return [params.data[0], params.data[1]]; }"
-    }
+    fig_energy.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+        height=500,
+        uirevision="constant_3d_view" # Kamera açısının sıfırlanmasını engelle
+    )
     
-    event_3d = st_echarts(options=options, events=events, height="500px", key="echarts_3d")
+    # 3D Tıklama olaylarını yakalamak için plotly_events kullanıyoruz
+    event_3d = plotly_events(fig_energy, click_event=True, hover_event=False, select_event=False)
     
     # Update session state if 3D plot is clicked
-    if event_3d and isinstance(event_3d, list) and len(event_3d) == 2:
-        clicked_x = int(event_3d[0])
-        clicked_y = int(event_3d[1])
-        if st.session_state.col_val_input != clicked_x or st.session_state.row_val_input != clicked_y:
-            st.session_state.col_val_input = clicked_x
-            st.session_state.col_val_slider = clicked_x
-            st.session_state.row_val_input = clicked_y
-            st.session_state.row_val_slider = clicked_y
+    if event_3d and isinstance(event_3d, list) and len(event_3d) > 0:
+        point = event_3d[0]
+        if 'x' in point and 'y' in point:
+            clicked_x = int(point["x"])
+            clicked_y = int(point["y"])
+            if st.session_state.col_val_input != clicked_x or st.session_state.row_val_input != clicked_y:
+                st.session_state.col_val_input = clicked_x
+                st.session_state.col_val_slider = clicked_x
+                st.session_state.row_val_input = clicked_y
+                st.session_state.row_val_slider = clicked_y
+                st.rerun()
 
 # Layout for Images
 st.divider()
