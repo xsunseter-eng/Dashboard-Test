@@ -5,3 +5,4 @@ Pillow
 numpy
 streamlit-plotly-events
 huggingface_hub
+streamlit-image-comparison

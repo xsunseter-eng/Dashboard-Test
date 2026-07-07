@@ -4,6 +4,7 @@ import plotly.graph_objects as pl
 import numpy as np
 from PIL import Image
 import os
+from streamlit_image_comparison import image_comparison
 
 
 st.set_page_config(page_title="Loop Closure Analysis Tool", layout="wide")
@@ -177,12 +178,12 @@ with col1:
         y=Y.flatten(),
         mode='markers',
         marker=dict(size=12, color='rgba(0,0,0,0)', symbol='square'),
-        hoverinfo='skip',
+        hoverinfo='none',
         showlegend=False
     ))
     
     # Render with Streamlit's native on_select
-    event = st.plotly_chart(fig_sim, width="stretch", on_select="rerun", selection_mode="points")
+    event_2d = st.plotly_chart(fig_sim, width="stretch", on_select="rerun", selection_mode="points")
 
 with col2:
     st.subheader("Energy Matrix")
@@ -191,8 +192,8 @@ with col2:
     fig_energy = pl.Figure(data=[pl.Surface(z=E, colorscale='Viridis')])
     
     # If a point is selected on the heatmap, update session state
-    if event and event.selection and "points" in event.selection and len(event.selection["points"]) > 0:
-        point = event.selection["points"][0]
+    if event_2d and event_2d.selection and "points" in event_2d.selection and len(event_2d.selection["points"]) > 0:
+        point = event_2d.selection["points"][0]
         clicked_x = int(point["x"])
         clicked_y = int(point["y"])
         
@@ -222,7 +223,20 @@ with col2:
         height=500
     )
     
-    st.plotly_chart(fig_energy, width="stretch")
+    event_3d = st.plotly_chart(fig_energy, width="stretch", on_select="rerun", selection_mode="points")
+    
+    # Check 3D selection as well
+    if event_3d and event_3d.selection and "points" in event_3d.selection and len(event_3d.selection["points"]) > 0:
+        point = event_3d.selection["points"][0]
+        # Depending on how Plotly returns 3D surface points, we might need 'x' and 'y'
+        if 'x' in point and 'y' in point:
+            clicked_x = int(point["x"])
+            clicked_y = int(point["y"])
+            if st.session_state.col_val_input != clicked_x or st.session_state.row_val_input != clicked_y:
+                st.session_state.col_val_input = clicked_x
+                st.session_state.col_val_slider = clicked_x
+                st.session_state.row_val_input = clicked_y
+                st.session_state.row_val_slider = clicked_y
 
 # Layout for Images
 st.divider()
@@ -249,8 +263,6 @@ with sel_col2:
 display_row = st.session_state.row_val_input
 display_col = st.session_state.col_val_input
 
-col_img1, col_img2 = st.columns(2)
-
 try:
     sim_val = S[display_row, display_col]
     energy_val = E[display_row, display_col]
@@ -260,20 +272,30 @@ try:
     
     info_placeholder.info(f"**Row:** {display_row} | **Col:** {display_col} | **Similarity:** {sim_val:.1f} | **Energy:** {energy_val:.1f} | **FrameA:** {frame_row} | **FrameB:** {frame_col}")
     
-    img_row = get_image(selected_seq["imageDir"], frame_row)
-    img_col = get_image(selected_seq["imageDir"], frame_col)
+    img_row_path = os.path.join(selected_seq["imageDir"], f"image_{frame_row:05d}.jpg")
+    img_col_path = os.path.join(selected_seq["imageDir"], f"image_{frame_col:05d}.jpg")
     
-    with col_img1:
-        if img_row:
-            st.image(img_row, caption=f"Frame {frame_row}")
-        else:
-            st.warning(f"Row Frame {frame_row} not found. (Expected at: {selected_seq['imageDir']})")
-            
-    with col_img2:
-        if img_col:
-            st.image(img_col, caption=f"Frame {frame_col}")
-        else:
-            st.warning(f"Column Frame {frame_col} not found. (Expected at: {selected_seq['imageDir']})")
+    st.subheader("Image Comparison Slider")
+    if os.path.exists(img_row_path) and os.path.exists(img_col_path):
+        image_comparison(
+            img1=img_row_path,
+            img2=img_col_path,
+            label1=f"Row Frame {frame_row}",
+            label2=f"Col Frame {frame_col}",
+            width=800
+        )
+    else:
+        if not os.path.exists(img_row_path):
+            st.warning(f"Row Frame {frame_row} not found. (Expected at: {img_row_path})")
+        if not os.path.exists(img_col_path):
+            st.warning(f"Column Frame {frame_col} not found. (Expected at: {img_col_path})")
             
 except IndexError:
     info_placeholder.error("Selected point is out of bounds.")
+    
+# Debug Logs
+with st.expander("🛠️ Debug Logs"):
+    st.write("2D Matrix Selection Event:")
+    st.json(event_2d.selection if 'event_2d' in locals() and event_2d else {})
+    st.write("3D Matrix Selection Event:")
+    st.json(event_3d.selection if 'event_3d' in locals() and event_3d else {})
