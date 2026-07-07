@@ -5,7 +5,6 @@ import numpy as np
 from PIL import Image
 import os
 from streamlit_image_comparison import image_comparison
-from streamlit_plotly_events import plotly_events
 
 
 st.set_page_config(page_title="Loop Closure Analysis Tool", layout="wide")
@@ -189,20 +188,7 @@ with col1:
 with col2:
     st.subheader("Energy Matrix")
     
-    # Sıkıştırma (Downsample) 40 bin noktanın çökmesini önlemek için
-    ds = max(1, E.shape[0] // 50) # Maksimum 50x50'lik bir matris oluştur
-    
-    X_e, Y_e = np.meshgrid(np.arange(E.shape[1]), np.arange(E.shape[0]))
-    X_e_ds = X_e[::ds, ::ds]
-    Y_e_ds = Y_e[::ds, ::ds]
-    E_ds = E[::ds, ::ds]
-    
-    fig_energy = pl.Figure(data=[pl.Surface(
-        x=X_e_ds, 
-        y=Y_e_ds, 
-        z=E_ds, 
-        colorscale='Viridis'
-    )])
+    fig_energy = pl.Figure(data=[pl.Surface(z=E, colorscale='Viridis')])
     
     selected_row = st.session_state.row_val_input
     selected_col = st.session_state.col_val_input
@@ -227,21 +213,7 @@ with col2:
         uirevision="constant_3d_view" # Kamera açısının sıfırlanmasını engelle
     )
     
-    # 3D Tıklama olaylarını yakalamak için plotly_events kullanıyoruz
-    event_3d = plotly_events(fig_energy, click_event=True, hover_event=False, select_event=False)
-    
-    # Update session state if 3D plot is clicked
-    if event_3d and isinstance(event_3d, list) and len(event_3d) > 0:
-        point = event_3d[0]
-        if 'x' in point and 'y' in point:
-            clicked_x = int(point["x"])
-            clicked_y = int(point["y"])
-            if st.session_state.col_val_input != clicked_x or st.session_state.row_val_input != clicked_y:
-                st.session_state.col_val_input = clicked_x
-                st.session_state.col_val_slider = clicked_x
-                st.session_state.row_val_input = clicked_y
-                st.session_state.row_val_slider = clicked_y
-                st.rerun()
+    st.plotly_chart(fig_energy, width="stretch")
 
 # Layout for Images
 st.divider()
