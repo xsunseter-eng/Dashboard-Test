@@ -279,9 +279,9 @@ try:
         st.subheader("Individual Frames")
         ind_col1, ind_col2 = st.columns(2)
         with ind_col1:
-            st.image(img_row_path, caption=f"Row Frame {frame_row}", use_container_width=True)
+            st.image(img_row_path, caption=f"Row Frame {frame_row}")
         with ind_col2:
-            st.image(img_col_path, caption=f"Col Frame {frame_col}", use_container_width=True)
+            st.image(img_col_path, caption=f"Col Frame {frame_col}")
     else:
         if not os.path.exists(img_row_path):
             st.warning(f"Row Frame {frame_row} not found. (Expected at: {img_row_path})")
