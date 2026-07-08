@@ -202,7 +202,20 @@ with col1:
 with col2:
     st.subheader("Energy Matrix")
     
-    fig_energy = pl.Figure(data=[pl.Surface(z=E, colorscale='Viridis')])
+    # Sıkıştırma (Downsample) 40 bin noktanın çökmesini önlemek için
+    ds = max(1, E.shape[0] // 50)
+    
+    X_e, Y_e = np.meshgrid(np.arange(E.shape[1]), np.arange(E.shape[0]))
+    X_e_ds = X_e[::ds, ::ds]
+    Y_e_ds = Y_e[::ds, ::ds]
+    E_ds = E[::ds, ::ds]
+    
+    fig_energy = pl.Figure(data=[pl.Surface(
+        x=X_e_ds, 
+        y=Y_e_ds, 
+        z=E_ds, 
+        colorscale='Viridis'
+    )])
     
     selected_row = st.session_state.row_val_input
     selected_col = st.session_state.col_val_input
