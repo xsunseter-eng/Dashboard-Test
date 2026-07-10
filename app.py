@@ -311,7 +311,7 @@ except Exception as e:
 #========================================================================
 st.divider()
 st.subheader("Loop Closure Matches")
-Define the path to the loop closure matches folder based on the selected sequence
+#Define the path to the loop closure matches folder based on the selected sequence
 matches_dir = os.path.join(selected_seq["resultDir"], "loop_closure_matches")
 if os.path.exists(matches_dir):
 # Get all image files in the directory and sort them
