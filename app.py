@@ -4,6 +4,8 @@ import plotly.graph_objects as pl
 import numpy as np
 from PIL import Image
 import os
+import requests
+from io import BytesIO
 from streamlit_image_comparison import image_comparison
 
 st.set_page_config(page_title="Loop Closure Analysis Tool", layout="wide")
@@ -96,6 +98,39 @@ def load_matrices(result_dir):
             
     return S, E
 
+@st.cache_data(show_spinner=False, max_entries=200)
+def fetch_image_bytes(url):
+    """Cache external image fetches to keep the app fast"""
+    res = requests.get(url, timeout=10)
+    res.raise_for_status()
+    return res.content
+
+def resolve_image(path, is_dataset=False):
+    """
+    Solves the 'PIL.UnidentifiedImageError' by checking if a file is an LFS/Xet pointer.
+    If it is a pointer file, it automatically downloads the real image from the HF URL.
+    """
+    if not os.path.exists(path):
+        return None
+    try:
+        # Check if it's a valid local image binary
+        with Image.open(path) as img:
+            img.verify()
+        return Image.open(path)
+    except Exception:
+        # It's an LFS/Xet pointer file! Fetch the real binary from the HuggingFace URL
+        rel_path = os.path.relpath(path, BASE_DIR).replace("\\", "/")
+        if is_dataset:
+            url = f"https://huggingface.co/datasets/Umutsoo/SimularityGui-Data/resolve/main/{rel_path}"
+        else:
+            url = f"https://huggingface.co/spaces/Umutsoo/SimularityGui/resolve/main/{rel_path}"
+        try:
+            img_bytes = fetch_image_bytes(url)
+            return Image.open(BytesIO(img_bytes))
+        except Exception as e:
+            print(f"Error fetching {url}: {e}")
+            return None
+
 # ========================================================================
 # Main App & State Initialization
 # ========================================================================
@@ -164,35 +199,32 @@ energy_val = E[display_row, display_col]
 frame_row = display_row * 12
 frame_col = display_col * 12
 
-img_row_path = os.path.join(selected_seq["imageDir"], f"image_{frame_row:05d}.jpg")
-img_col_path = os.path.join(selected_seq["imageDir"], f"image_{frame_col:05d}.jpg")
-
 
 # ========================================================================
-# 1. IMAGE COMPARISON SLIDER (Now at the very top)
+# 1. IMAGE COMPARISON SLIDER 
 # ========================================================================
 st.divider()
 st.subheader("Frame Comparison")
 
-try:
-    if os.path.exists(img_row_path) and os.path.exists(img_col_path):
-        # Render the swipeable image comparison component
-        image_comparison(
-            img1=img_row_path,
-            img2=img_col_path,
-            label1=f"Row Frame {frame_row}",
-            label2=f"Col Frame {frame_col}",
-            width=800
-        )
-    else:
-        if not os.path.exists(img_row_path):
-            st.warning(f"Row Frame {frame_row} not found. (Expected at: {img_row_path})")
-        if not os.path.exists(img_col_path):
-            st.warning(f"Column Frame {frame_col} not found. (Expected at: {img_col_path})")
-            
-except Exception as e:
-    st.error(f"Error loading images: {e}")
+# Build Paths
+img_row_path = os.path.join(selected_seq["imageDir"], f"image_{frame_row:05d}.jpg")
+img_col_path = os.path.join(selected_seq["imageDir"], f"image_{frame_col:05d}.jpg")
 
+# Resolve images safely (handles both actual images and LFS pointers)
+img_row_obj = resolve_image(img_row_path, is_dataset=True)
+img_col_obj = resolve_image(img_col_path, is_dataset=True)
+
+if img_row_obj and img_col_obj:
+    # Render the swipeable image comparison component
+    image_comparison(
+        img1=img_row_obj,
+        img2=img_col_obj,
+        label1=f"Row Frame {frame_row}",
+        label2=f"Col Frame {frame_col}",
+        width=800
+    )
+else:
+    st.warning("Frame images could not be loaded or are missing from the dataset.")
 
 # ========================================================================
 # 2. FRAME SELECTION CONTROLS
@@ -295,16 +327,17 @@ with col2:
 st.divider()
 st.subheader("Individual Frames")
 
-try:
-    if os.path.exists(img_row_path) and os.path.exists(img_col_path):
-        ind_col1, ind_col2 = st.columns(2)
-        with ind_col1:
-            st.image(img_row_path, caption=f"Row Frame {frame_row}")
-        with ind_col2:
-            st.image(img_col_path, caption=f"Col Frame {frame_col}")
-except Exception as e:
-    st.error(f"Error loading static images: {e}")
+if img_row_obj and img_col_obj:
+    ind_col1, ind_col2 = st.columns(2)
+    with ind_col1:
+        st.image(img_row_obj, caption=f"Row Frame {frame_row}")
+    with ind_col2:
+        st.image(img_col_obj, caption=f"Col Frame {frame_col}")
 
+
+# ========================================================================
+# 5. LOOP CLOSURE MATCHES
+# ========================================================================
 st.divider()
 st.subheader("Loop Closure Matches")
 
@@ -324,16 +357,22 @@ if os.path.exists(matches_dir):
             # Place the first image in the left column
             with cols[0]:
                 img_path1 = os.path.join(matches_dir, match_images[i])
-                st.image(img_path1, caption=match_images[i], use_container_width=True)
+                img1_obj = resolve_image(img_path1, is_dataset=False)
+                if img1_obj:
+                    st.image(img1_obj, caption=match_images[i], use_container_width=True)
+                else:
+                    st.error(f"Could not load {match_images[i]}")
             
             # Place the second image in the right column (if it exists)
             with cols[1]:
                 if i + 1 < len(match_images):
                     img_path2 = os.path.join(matches_dir, match_images[i + 1])
-                    st.image(img_path2, caption=match_images[i + 1], use_container_width=True)
+                    img2_obj = resolve_image(img_path2, is_dataset=False)
+                    if img2_obj:
+                        st.image(img2_obj, caption=match_images[i + 1], use_container_width=True)
+                    else:
+                        st.error(f"Could not load {match_images[i+1]}")
     else:
         st.info("No images found in the loop_closure_matches folder.")
 else:
     st.info("No loop_closure_matches folder found for this sequence.")
-
-
