@@ -119,7 +119,8 @@ def resolve_image(path, is_dataset=False):
         st.error(url)
         st.exception(e)
         return None
-
+    img_bytes = fetch_image_bytes(url)
+    return Image.open(BytesIO(img_bytes))
 # ========================================================================
 # Main App & State Initialization
 # ========================================================================
@@ -210,9 +211,12 @@ with comp_col1:
     img_col_path = os.path.join(selected_seq["imageDir"], f"image_{frame_col:05d}.jpg")
 
     # Resolve images safely (handles both actual images and LFS pointers)
-    img_row_obj = resolve_image(img_row_path, is_dataset=True)
-    img_col_obj = resolve_image(img_col_path, is_dataset=True)
-
+    #img_row_obj = resolve_image(img_row_path, is_dataset=True)
+    #img_col_obj = resolve_image(img_col_path, is_dataset=True)
+    
+    img_row_obj = resolve_image(frame_url)
+    img_col_obj = resolve_image(frame_url2)
+    img1_obj = resolve_image(match_url)
     if img_row_obj and img_col_obj:
         # Render the swipeable image comparison component
         image_comparison(
