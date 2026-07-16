@@ -180,6 +180,7 @@ st.divider()
 comp_col1, comp_col2 = st.columns(2)
 
 with comp_col2:
+    st.subheader("Sequence Video")
     st.video("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 
 with comp_col1:
