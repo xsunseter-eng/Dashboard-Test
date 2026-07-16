@@ -23,27 +23,32 @@ sequences = [
     {
         "name": "spot_forest_hard_data_images_rgb",
         "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_forest_hard_data_images_rgb"),
-        "imageDir": os.path.join(NETVLAD_DIR, "spot_forest_hard_data_images_rgb")
+        "imageDir": os.path.join(NETVLAD_DIR, "spot_forest_hard_data_images_rgb"),
+        "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_forest_hard/spot_forest_hard_rgb.mp4"
     },
     {
         "name": "spot_indoor_building_loop_data_images_rgb",
         "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_indoor_building_loop_data_images_rgb"),
-        "imageDir": os.path.join(NETVLAD_DIR, "spot_indoor_building_loop_data_images_rgb")
+        "imageDir": os.path.join(NETVLAD_DIR, "spot_indoor_building_loop_data_images_rgb"),
+        "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_indoor_building_loop/spot_indoor_building_loop_rgb.mp4"
     },
     {
         "name": "spot_indoor_obstacles_data_images_rgb",
         "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_indoor_obstacles_data_images_rgb"),
-        "imageDir": os.path.join(NETVLAD_DIR, "spot_indoor_obstacles_data_images_rgb")
+        "imageDir": os.path.join(NETVLAD_DIR, "spot_indoor_obstacles_data_images_rgb"),
+        "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_indoor_obstacles/spot_indoor_obstacles_rgb.mp4"
     },
     {
         "name": "spot_outdoor_day_skatepark_1_data_images_rgb",
         "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_outdoor_day_skatepark_1_data_images_rgb"),
-        "imageDir": os.path.join(NETVLAD_DIR, "spot_outdoor_day_skatepark_1_data_images_rgb")
+        "imageDir": os.path.join(NETVLAD_DIR, "spot_outdoor_day_skatepark_1_data_images_rgb"),
+        "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_outdoor_day_skatepark_1/spot_outdoor_day_skatepark_1_rgb.mp4"
     },
     {
         "name": "spot_outdoor_day_skatepark_2_data_images_rgb",
         "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_outdoor_day_skatepark_2_data_images_rgb"),
-        "imageDir": os.path.join(NETVLAD_DIR, "spot_outdoor_day_skatepark_2_data_images_rgb")
+        "imageDir": os.path.join(NETVLAD_DIR, "spot_outdoor_day_skatepark_2_data_images_rgb"),
+        "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_outdoor_day_skatepark_2/spot_outdoor_day_skatepark_2_rgb.mp4"
     }
 ]
 
@@ -181,7 +186,10 @@ comp_col1, comp_col2 = st.columns(2)
 
 with comp_col2:
     st.subheader("Sequence Video")
-    st.video("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    if "video" in selected_seq:
+        st.video(selected_seq["video"])
+    else:
+        st.info("No video available for this sequence.")
 
 with comp_col1:
     st.subheader("Frame Comparison")
