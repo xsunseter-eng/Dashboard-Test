@@ -88,42 +88,35 @@ def fetch_image_bytes(url):
     res.raise_for_status()
     return res.content
 
+@st.cache_data(show_spinner=False)
 def resolve_image(path, is_dataset=False):
-    """
-    Zero-Load Architecture: Fetch image directly from HF URL.
-    """
-    rel_path = os.path.relpath(path, BASE_DIR).replace("\\", "/")
-    if is_dataset:
-        #url = f"https://huggingface.co/datasets/e230450/M3ED_loop_closure_results/resolve/main/{rel_path}"
-        url = f"https://huggingface.co/datasets/e230450/Loop_Closure_forest_hard/resolve/main/{rel_path}"
-
-    else:
-        #url = f"https://huggingface.co/datasets/e230450/M3ED_loop_closure_results/resolve/main/{rel_path}"
-        url = f"https://huggingface.co/datasets/e230450/Loop_Closure_forest_hard/resolve/main/{rel_path}"
-        
-    @st.cache_data(show_spinner=False)
-    def resolve_image(path):
-        # Prefer local file
-        if os.path.isfile(path):
-            try:
-                return Image.open(path)
-            except Exception as e:
-                st.write(f"Local image error: {e}")
-                return None
-    
-        # Fallback to Hugging Face
-        rel_path = os.path.relpath(path, BASE_DIR).replace("\\", "/")
-        url = (
-            "https://huggingface.co/datasets/"
-            "e230450/M3ED_loop_closure_results/resolve/main/"
-            f"{rel_path}"
-        )
-    
+    # 1. Try local file first
+    if os.path.isfile(path):
         try:
-            img_bytes = fetch_image_bytes(url)
-            return Image.open(BytesIO(img_bytes))
-        except Exception:
+            img = Image.open(path)
+            img.load()          # force decoding
+            return img
+        except Exception as e:
+            st.error(f"Cannot open {path}")
+            st.exception(e)
             return None
+
+    # 2. Fallback to HuggingFace
+    rel_path = os.path.relpath(path, BASE_DIR).replace("\\", "/")
+
+    url = (
+        "https://huggingface.co/datasets/"
+        "e230450/Loop_Closure_forest_hard/resolve/main/"
+        f"{rel_path}"
+    )
+
+    try:
+        img_bytes = fetch_image_bytes(url)
+        return Image.open(BytesIO(img_bytes))
+    except Exception as e:
+        st.error(url)
+        st.exception(e)
+        return None
 
 # ========================================================================
 # Main App & State Initialization
