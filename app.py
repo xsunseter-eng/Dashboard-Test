@@ -89,9 +89,9 @@ def resolve_image(path, is_dataset=False):
     """
     rel_path = os.path.relpath(path, BASE_DIR).replace("\\", "/")
     if is_dataset:
-        url = f"https://huggingface.co/datasets/Umutsoo/SimularityGui-Data/resolve/main/{rel_path}"
+        url = f"https://huggingface.co/datasets/e230450/M3ED_loop_closure_results/resolve/main/{rel_path}"
     else:
-        url = f"https://huggingface.co/spaces/Umutsoo/SimularityGui/resolve/main/{rel_path}"
+        url = f"https://huggingface.co/datasets/e230450/M3ED_loop_closure_results/resolve/main/{rel_path}"
     try:
         img_bytes = fetch_image_bytes(url)
         return Image.open(BytesIO(img_bytes))
