@@ -349,7 +349,11 @@ if img_row_obj and img_col_obj:
         st.image(img_row_obj, caption=f"Row Frame {frame_row}")
     with ind_col2:
         st.image(img_col_obj, caption=f"Col Frame {frame_col}")
-
+        
+st.write("Result dir:", selected_seq["resultDir"])
+st.write("Matches dir:", matches_dir)
+st.write("Result exists:", os.path.exists(selected_seq["resultDir"]))
+st.write("Matches exists:", os.path.exists(matches_dir))
 
 # ========================================================================
 # 5. LOOP CLOSURE MATCHES
