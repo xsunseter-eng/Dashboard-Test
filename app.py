@@ -177,30 +177,33 @@ frame_col = display_col * 12
 # 1. IMAGE COMPARISON SLIDER 
 # ========================================================================
 st.divider()
-with col1:
-st.subheader("Frame Comparison")
+comp_col1, comp_col2 = st.columns(2)
 
-# Build Paths
-img_row_path = os.path.join(selected_seq["imageDir"], f"image_{frame_row:05d}.jpg")
-img_col_path = os.path.join(selected_seq["imageDir"], f"image_{frame_col:05d}.jpg")
+with comp_col1:
+    st.subheader("Frame Comparison")
 
-# Resolve images safely (handles both actual images and LFS pointers)
-img_row_obj = resolve_image(img_row_path, is_dataset=True)
-img_col_obj = resolve_image(img_col_path, is_dataset=True)
+    # Build Paths
+    img_row_path = os.path.join(selected_seq["imageDir"], f"image_{frame_row:05d}.jpg")
+    img_col_path = os.path.join(selected_seq["imageDir"], f"image_{frame_col:05d}.jpg")
 
-if img_row_obj and img_col_obj:
-    # Render the swipeable image comparison component
-    image_comparison(
-        img1=img_row_obj,
-        img2=img_col_obj,
-        label1=f"Row Frame {frame_row}",
-        label2=f"Col Frame {frame_col}",
-        width=800
-    )
-else:
-    st.warning("Frame images could not be loaded or are missing from the dataset.")
-with col2:
-st.video("https://www.youtube.com/watch?v=dQw4w9WgXcQ") 
+    # Resolve images safely (handles both actual images and LFS pointers)
+    img_row_obj = resolve_image(img_row_path, is_dataset=True)
+    img_col_obj = resolve_image(img_col_path, is_dataset=True)
+
+    if img_row_obj and img_col_obj:
+        # Render the swipeable image comparison component
+        image_comparison(
+            img1=img_row_obj,
+            img2=img_col_obj,
+            label1=f"Row Frame {frame_row}",
+            label2=f"Col Frame {frame_col}",
+            width=800
+        )
+    else:
+        st.warning("Frame images could not be loaded or are missing from the dataset.")
+
+with comp_col2:
+    st.video("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 # ========================================================================
 # 2. FRAME SELECTION CONTROLS
 # ========================================================================
