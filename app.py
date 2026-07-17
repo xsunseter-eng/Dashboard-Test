@@ -15,9 +15,12 @@ st.set_page_config(page_title="Loop Closure Analysis Tool", layout="wide")
 # ========================================================================
 BASE_DIR = os.path.dirname(__file__)
 ACCELERATED_FEATURES_DIR = os.path.join(BASE_DIR, "accelerated_features")
+ACCELERATED_FEATURES_DIR = os.path.join("https://huggingface.co/datasets/e230450/M3ED_loop_closure_results/tree/main/")
+
 NETVLAD_DIR = BASE_DIR
 
 # Zero-Load Architecture: We no longer download the dataset locally.
+#https://huggingface.co/datasets/e230450/M3ED_loop_closure_results/tree/main/realtime_results_v2_spot_forest_hard_data_images_rgb
 
 sequences = [
     {
