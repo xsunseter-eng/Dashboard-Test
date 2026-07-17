@@ -370,10 +370,7 @@ if img_row_obj and img_col_obj:
     with ind_col2:
         st.image(img_col_obj, caption=f"Col Frame {frame_col}")
         
-#st.write("Result dir:", selected_seq["resultDir"])
-#st.write("Matches dir:", matches_dir)
-#st.write("Result exists:", os.path.exists(selected_seq["resultDir"]))
-#st.write("Matches exists:", os.path.exists(matches_dir))
+
 
 # ========================================================================
 # 5. LOOP CLOSURE MATCHES
@@ -384,13 +381,7 @@ st.subheader("Loop Closure Matches")
 # Define the path to the loop closure matches folder based on the selected sequence
 matches_dir = os.path.join(selected_seq["resultDir"], "loop_closure_matches")
 
-st.write("Result dir:", selected_seq["resultDir"])
-st.write("Matches dir:", matches_dir)
-st.write("Result exists:", os.path.exists(selected_seq["resultDir"]))
-st.write("Matches exists:", os.path.exists(matches_dir))
 
-if os.path.exists(selected_seq["resultDir"]):
-    st.write(os.listdir(selected_seq["resultDir"]))
 
 if os.path.exists(matches_dir):
     # Get all image files in the directory and sort them
@@ -406,9 +397,6 @@ if os.path.exists(matches_dir):
             with cols[0]:
                 img_path1 = os.path.join(matches_dir, match_images[i])
 
-                st.write(img_path1)
-                st.write(os.path.isfile(img_path1))
-                
                 img1_obj = resolve_image(img_path1, is_dataset=False)
                 if img1_obj:
                     st.image(img1_obj, caption=match_images[i], use_container_width=True)
