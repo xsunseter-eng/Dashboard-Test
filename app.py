@@ -217,8 +217,8 @@ with comp_col1:
     st.subheader("Frame Comparison")
 
     # Build Paths
-    img_row_path = os.path.join(selected_seq["imageDir"], f"image_{frame_row:05d}.jpg")
-    img_col_path = os.path.join(selected_seq["imageDir"], f"image_{frame_col:05d}.jpg")
+    img_row_path = os.path.join(selected_seq["imageDir"], f"image_{frame_row:05d}.png")
+    img_col_path = os.path.join(selected_seq["imageDir"], f"image_{frame_col:05d}.png")
 
     # Resolve images safely (handles both actual images and LFS pointers)
     img_row_obj = resolve_image(img_row_path, is_dataset=True)
