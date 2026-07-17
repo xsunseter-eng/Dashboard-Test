@@ -15,7 +15,7 @@ st.set_page_config(page_title="Loop Closure Analysis Tool", layout="wide")
 # ========================================================================
 BASE_DIR = os.path.dirname(__file__)
 ACCELERATED_FEATURES_DIR = os.path.join(BASE_DIR, "accelerated_features")
-ACCELERATED_FEATURES_DIR2 = os.path.join("https://huggingface.co/datasets/e230450/M3ED_loop_closure_results/blob/main/")
+ACCELERATED_FEATURES_DIR2 = os.path.join("https://huggingface.co/datasets/e230450/M3ED_loop_closure_results/tree/main/")
 
 NETVLAD_DIR = BASE_DIR
 
