@@ -15,7 +15,7 @@ st.set_page_config(page_title="Loop Closure Analysis Tool", layout="wide")
 # ========================================================================
 BASE_DIR = os.path.dirname(__file__)
 ACCELERATED_FEATURES_DIR = os.path.join(BASE_DIR, "accelerated_features")
-ACCELERATED_FEATURES_DIR = os.path.join("https://huggingface.co/datasets/e230450/M3ED_loop_closure_results/tree/main/")
+ACCELERATED_FEATURES_DIR2 = os.path.join("https://huggingface.co/datasets/e230450/M3ED_loop_closure_results/tree/main/")
 
 NETVLAD_DIR = BASE_DIR
 
@@ -25,31 +25,31 @@ NETVLAD_DIR = BASE_DIR
 sequences = [
     {
         "name": "spot_forest_hard_data_images_rgb",
-        "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_forest_hard_data_images_rgb"),
+        "resultDir2": os.path.join(ACCELERATED_FEATURES_DIR2, "realtime_results_v2_spot_forest_hard_data_images_rgb"),
         "imageDir": os.path.join(NETVLAD_DIR, "spot_forest_hard_data_images_rgb"),
         "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_forest_hard/spot_forest_hard_rgb.mp4"
     },
     {
         "name": "spot_indoor_building_loop_data_images_rgb",
-        "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_indoor_building_loop_data_images_rgb"),
+        "resultDir": os.path.join(ACCELERATED_FEATURES_DIR2, "realtime_results_v2_spot_indoor_building_loop_data_images_rgb"),
         "imageDir": os.path.join(NETVLAD_DIR, "spot_indoor_building_loop_data_images_rgb"),
         "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_indoor_building_loop/spot_indoor_building_loop_rgb.mp4"
     },
     {
         "name": "spot_indoor_obstacles_data_images_rgb",
-        "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_indoor_obstacles_data_images_rgb"),
+        "resultDir": os.path.join(ACCELERATED_FEATURES_DIR2, "realtime_results_v2_spot_indoor_obstacles_data_images_rgb"),
         "imageDir": os.path.join(NETVLAD_DIR, "spot_indoor_obstacles_data_images_rgb"),
         "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_indoor_obstacles/spot_indoor_obstacles_rgb.mp4"
     },
     {
         "name": "spot_outdoor_day_skatepark_1_data_images_rgb",
-        "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_outdoor_day_skatepark_1_data_images_rgb"),
+        "resultDir": os.path.join(ACCELERATED_FEATURES_DIR2, "realtime_results_v2_spot_outdoor_day_skatepark_1_data_images_rgb"),
         "imageDir": os.path.join(NETVLAD_DIR, "spot_outdoor_day_skatepark_1_data_images_rgb"),
         "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_outdoor_day_skatepark_1/spot_outdoor_day_skatepark_1_rgb.mp4"
     },
     {
         "name": "spot_outdoor_day_skatepark_2_data_images_rgb",
-        "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_outdoor_day_skatepark_2_data_images_rgb"),
+        "resultDir": os.path.join(ACCELERATED_FEATURES_DIR2, "realtime_results_v2_spot_outdoor_day_skatepark_2_data_images_rgb"),
         "imageDir": os.path.join(NETVLAD_DIR, "spot_outdoor_day_skatepark_2_data_images_rgb"),
         "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_outdoor_day_skatepark_2/spot_outdoor_day_skatepark_2_rgb.mp4"
     }
