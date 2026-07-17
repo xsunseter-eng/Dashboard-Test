@@ -93,15 +93,11 @@ def resolve_image(path, is_dataset=False):
     # 1. Try local file first
     if os.path.isfile(path):
         try:
-            with open(path, "rb") as f:
-                st.code(f.read(200))
             img = Image.open(path)
             img.load()          # force decoding
             return img
-        except Exception as e:
-            st.error(f"Cannot open {path}")
-            st.exception(e)
-            return None
+        except Exception:
+            pass # LFS pointer or invalid image, fallback to HuggingFace
 
     # 2. Fallback to HuggingFace
     rel_path = os.path.relpath(path, BASE_DIR).replace("\\", "/")
