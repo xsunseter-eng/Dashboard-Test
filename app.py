@@ -113,7 +113,7 @@ def resolve_image(path, is_dataset=False):
         if rel_path.startswith("accelerated_features/"):
             rel_path = rel_path.replace("accelerated_features/", "", 1)
 
-    url = f"https://huggingface.co/datasets/e230450/{repo}/resolve/main/{rel_path}"
+    url = f"https://huggingface.co/datasets/e230450/{repo}/blob/main/{rel_path}"
 
     try:
         try:
