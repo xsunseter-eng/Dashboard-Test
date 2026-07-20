@@ -137,6 +137,41 @@ def resolve_image(path, is_dataset=False):
     except Exception as e:
         st.error(f"Could not load image from HF: {url}")
         return None
+def render_dynamic_gallery(folder_path):
+    import json
+    if not os.path.exists(folder_path):
+        st.info(f"Directory {folder_path} does not exist.")
+        return
+
+    # Check for config
+    config_path = os.path.join(folder_path, "config.json")
+    num_cols = 2 # default
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r") as f:
+                cfg = json.load(f)
+                num_cols = cfg.get("columns", 2)
+        except Exception as e:
+            st.error(f"Error reading config.json: {e}")
+
+    valid_exts = ('.jpg', '.jpeg', '.png')
+    images = sorted([f for f in os.listdir(folder_path) if f.lower().endswith(valid_exts)])
+
+    if not images:
+        st.info(f"No images found in {folder_path}.")
+        return
+
+    # Render in grid
+    cols = st.columns(num_cols)
+    for i, img_name in enumerate(images):
+        col = cols[i % num_cols]
+        img_path = os.path.join(folder_path, img_name)
+        img_obj = resolve_image(img_path, is_dataset=False)
+        if img_obj:
+            col.image(img_obj, caption=f"Fig: {img_name}", use_container_width=True)
+        else:
+            col.error(f"Could not load {img_name}")
+
 # ========================================================================
 # Main App & State Initialization
 # ========================================================================
@@ -505,7 +540,7 @@ st.divider()
 st.header("Geometry Check")
 
 st.markdown("#### GUI Output")
-st.image("https://via.placeholder.com/800x600.png?text=GUI+Output+Placeholder", use_container_width=True, caption="Fig: GUI Output Preview")
+render_dynamic_gallery("output_images")
 
 st.markdown("#### Overall Summary")
-st.image("https://via.placeholder.com/800x600.png?text=Overall+Summary+Placeholder", use_container_width=True, caption="Fig: Overall Summary Preview")
+render_dynamic_gallery("summary_images")
