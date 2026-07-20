@@ -1,6 +1,8 @@
 import streamlit as st
 import scipy.io
 import plotly.graph_objects as pl
+import plotly.express as px
+import pandas as pd
 import numpy as np
 from PIL import Image
 import os
@@ -15,35 +17,43 @@ st.set_page_config(page_title="Loop Closure Analysis Tool", layout="wide")
 # ========================================================================
 BASE_DIR = os.path.dirname(__file__)
 ACCELERATED_FEATURES_DIR = os.path.join(BASE_DIR, "accelerated_features")
+
+
 NETVLAD_DIR = BASE_DIR
 
 # Zero-Load Architecture: We no longer download the dataset locally.
-
+#https://huggingface.co/datasets/e230450/M3ED_loop_closure_results/tree/main/realtime_results_v2_spot_forest_hard_data_images_rgb
+#https://huggingface.co/datasets/e230450/M3ED_loop_closure_results/resolve/main/realtime_results_v2_spot_indoor_building_loop_data_images_rgb/loop_closure_matches/LC_105_185.png
 sequences = [
     {
         "name": "spot_forest_hard_data_images_rgb",
         "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_forest_hard_data_images_rgb"),
-        "imageDir": os.path.join(NETVLAD_DIR, "spot_forest_hard_data_images_rgb")
+        "imageDir": os.path.join(NETVLAD_DIR, "spot_forest_hard_data_images_rgb"),
+        "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_forest_hard/spot_forest_hard_rgb.mp4"
     },
     {
         "name": "spot_indoor_building_loop_data_images_rgb",
         "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_indoor_building_loop_data_images_rgb"),
-        "imageDir": os.path.join(NETVLAD_DIR, "spot_indoor_building_loop_data_images_rgb")
+        "imageDir": os.path.join(NETVLAD_DIR, "spot_indoor_building_loop_data_images_rgb"),
+        "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_indoor_building_loop/spot_indoor_building_loop_rgb.mp4"
     },
     {
         "name": "spot_indoor_obstacles_data_images_rgb",
         "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_indoor_obstacles_data_images_rgb"),
-        "imageDir": os.path.join(NETVLAD_DIR, "spot_indoor_obstacles_data_images_rgb")
+        "imageDir": os.path.join(NETVLAD_DIR, "spot_indoor_obstacles_data_images_rgb"),
+        "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_indoor_obstacles/spot_indoor_obstacles_rgb.mp4"
     },
     {
         "name": "spot_outdoor_day_skatepark_1_data_images_rgb",
         "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_outdoor_day_skatepark_1_data_images_rgb"),
-        "imageDir": os.path.join(NETVLAD_DIR, "spot_outdoor_day_skatepark_1_data_images_rgb")
+        "imageDir": os.path.join(NETVLAD_DIR, "spot_outdoor_day_skatepark_1_data_images_rgb"),
+        "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_outdoor_day_skatepark_1/spot_outdoor_day_skatepark_1_rgb.mp4"
     },
     {
         "name": "spot_outdoor_day_skatepark_2_data_images_rgb",
         "resultDir": os.path.join(ACCELERATED_FEATURES_DIR, "realtime_results_v2_spot_outdoor_day_skatepark_2_data_images_rgb"),
-        "imageDir": os.path.join(NETVLAD_DIR, "spot_outdoor_day_skatepark_2_data_images_rgb")
+        "imageDir": os.path.join(NETVLAD_DIR, "spot_outdoor_day_skatepark_2_data_images_rgb"),
+        "video": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_outdoor_day_skatepark_2/spot_outdoor_day_skatepark_2_rgb.mp4"
     }
 ]
 
@@ -83,37 +93,174 @@ def fetch_image_bytes(url):
     res.raise_for_status()
     return res.content
 
+@st.cache_data(show_spinner=False)
 def resolve_image(path, is_dataset=False):
-    """
-    Zero-Load Architecture: Fetch image directly from HF URL.
-    """
+    # 1. Try local file first
+    if os.path.isfile(path):
+        try:
+            img = Image.open(path)
+            img.load()          # force decoding
+            return img
+        except Exception:
+            pass # LFS pointer or invalid image, fallback to HuggingFace
+
+    # 2. Fallback to HuggingFace
     rel_path = os.path.relpath(path, BASE_DIR).replace("\\", "/")
+    
     if is_dataset:
-        url = f"https://huggingface.co/datasets/Umutsoo/SimularityGui-Data/resolve/main/{rel_path}"
+        repo = "M3ED_frames"
     else:
-        url = f"https://huggingface.co/spaces/Umutsoo/SimularityGui/resolve/main/{rel_path}"
+        repo = "M3ED_loop_closure_results"
+        # Strip accelerated_features/ because HF dataset root contains its children
+        if rel_path.startswith("accelerated_features/"):
+            rel_path = rel_path.replace("accelerated_features/", "", 1)
+
+    url = f"https://huggingface.co/datasets/e230450/{repo}/resolve/main/{rel_path}"
+
     try:
-        img_bytes = fetch_image_bytes(url)
-        return Image.open(BytesIO(img_bytes))
-    except Exception as e:
-        # Fallback to local
-        if os.path.exists(path):
+        try:
+            img_bytes = fetch_image_bytes(url)
+        except Exception:
+            img_bytes = None
+
+        if img_bytes is None and url.lower().endswith((".jpg", ".jpeg")):
+            url_png = url.rsplit(".", 1)[0] + ".png"
             try:
-                return Image.open(path)
+                img_bytes = fetch_image_bytes(url_png)
             except Exception:
-                pass
+                img_bytes = None
+            
+        if img_bytes:
+            return Image.open(BytesIO(img_bytes))
+        else:
+            raise Exception("Image not found")
+    except Exception as e:
+        st.error(f"Could not load image from HF: {url}")
         return None
+def render_dynamic_gallery(folder_path):
+    import json
+    if not os.path.exists(folder_path):
+        st.info(f"Directory {folder_path} does not exist.")
+        return
+
+    # Check for config
+    config_path = os.path.join(folder_path, "config.json")
+    num_cols = 2 # default
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r") as f:
+                cfg = json.load(f)
+                num_cols = cfg.get("columns", 2)
+        except Exception as e:
+            st.error(f"Error reading config.json: {e}")
+
+    valid_exts = ('.jpg', '.jpeg', '.png')
+    images = sorted([f for f in os.listdir(folder_path) if f.lower().endswith(valid_exts)])
+
+    if not images:
+        st.info(f"No images found in {folder_path}.")
+        return
+
+    # Render in grid
+    cols = st.columns(num_cols)
+    for i, img_name in enumerate(images):
+        col = cols[i % num_cols]
+        img_path = os.path.join(folder_path, img_name)
+        img_obj = resolve_image(img_path, is_dataset=False)
+        if img_obj:
+            col.image(img_obj, caption=f"Fig: {img_name}", use_container_width=True)
+        else:
+            col.error(f"Could not load {img_name}")
 
 # ========================================================================
 # Main App & State Initialization
 # ========================================================================
 
-st.title("Loop Closure Analysis Tool")
+# Inject Custom CSS for Academic Formatting
+st.markdown("""
+<style>
+    html, body, [class*="css"] {
+        font-family: 'Times New Roman', Times, serif !important;
+    }
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Times New Roman', Times, serif !important;
+    }
+    .main-title {
+        text-align: center;
+        font-size: 3rem !important;
+        font-weight: bold;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #000;
+        padding-bottom: 10px;
+    }
+    /* IEEE Style Tables */
+    [data-testid="stDataFrame"] table {
+        border-top: 2px solid black !important;
+        border-bottom: 2px solid black !important;
+        border-collapse: collapse !important;
+    }
+    [data-testid="stDataFrame"] th {
+        border-bottom: 1px solid black !important;
+        border-top: none !important;
+        background-color: transparent !important;
+        font-weight: bold !important;
+    }
+    [data-testid="stDataFrame"] td, [data-testid="stDataFrame"] th {
+        border-left: none !important;
+        border-right: none !important;
+        background-color: white !important;
+    }
+    /* Divider Customization */
+    hr {
+        border-top: 1px solid black !important;
+        margin: 1.5em 0 !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("<div class='main-title'>Loop Closure Analysis Tool</div>", unsafe_allow_html=True)
 st.markdown("Use the **Image Comparison Slider**, manually configure frames, or click the **Similarity Matrix** to explore loop closures.")
 
 # Dropdown
 selected_seq_name = st.selectbox("Select a sequence", list(seq_dict.keys()))
 selected_seq = seq_dict[selected_seq_name]
+
+# ========================================================================
+# DASHBOARD SUMMARY & VIDEO (NEW GUI ELEMENTS)
+# ========================================================================
+st.divider()
+
+# 1. Full-width Video
+st.header("Loop Closure GUI")
+demo_video_url = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+st.video(demo_video_url)
+
+# 2. Figure and Table Side-by-Side
+summary_col1, summary_col2 = st.columns(2)
+
+try:
+    df_summary = pd.read_csv("dashboard_summary.csv")
+    
+    with summary_col1:
+        st.subheader("Figure")
+        df_summary["Pair"] = df_summary["Frame1"].astype(str) + " - " + df_summary["Frame2"].astype(str)
+        fig_summary = px.bar(
+            df_summary, 
+            x="Pair", 
+            y=["Raw Matches", "Fundamental Inliers", "Pose Inliers"],
+            barmode="group"
+        )
+        st.plotly_chart(fig_summary, use_container_width=True)
+        
+    with summary_col2:
+        st.subheader("Table")
+        st.dataframe(df_summary, use_container_width=True)
+except Exception as e:
+    st.warning(f"Could not load dashboard_summary.csv: {e}")
+
+st.divider()
+st.header("Image Retrival")
 
 # Load Data
 with st.spinner("Loading matrices..."):
@@ -176,18 +323,21 @@ frame_col = display_col * 12
 # ========================================================================
 # 1. IMAGE COMPARISON SLIDER 
 # ========================================================================
-st.divider()
 comp_col1, comp_col2 = st.columns(2)
 
 with comp_col2:
-    st.video("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    st.subheader("Sequence Video")
+    if "video" in selected_seq:
+        st.video(selected_seq["video"])
+    else:
+        st.info("No video available for this sequence.")
 
 with comp_col1:
     st.subheader("Frame Comparison")
 
     # Build Paths
-    img_row_path = os.path.join(selected_seq["imageDir"], f"image_{frame_row:05d}.jpg")
-    img_col_path = os.path.join(selected_seq["imageDir"], f"image_{frame_col:05d}.jpg")
+    img_row_path = os.path.join(selected_seq["imageDir"], f"image_{frame_row:05d}.png")
+    img_col_path = os.path.join(selected_seq["imageDir"], f"image_{frame_col:05d}.png")
 
     # Resolve images safely (handles both actual images and LFS pointers)
     img_row_obj = resolve_image(img_row_path, is_dataset=True)
@@ -235,6 +385,32 @@ with col1:
         z=S,
         colorscale='Viridis',
         hoverongaps=False
+    ))
+
+    # Add red marker showing the current selection
+    fig_sim.add_trace(pl.Scatter(
+        x=[display_col],
+        y=[display_row],
+        mode="markers",
+        marker=dict(
+            color="red",
+            size=12,
+            symbol="circle",
+            line=dict(color="white", width=2)
+        ),
+        name="Selected Frame",
+        showlegend=False,
+        hoverinfo="skip"
+    ))
+    # Invisible scatter plot to capture Streamlit clicks
+    X, Y = np.meshgrid(np.arange(S.shape[1]), np.arange(S.shape[0]))
+    fig_sim.add_trace(pl.Scattergl(
+        x=X.flatten(),
+        y=Y.flatten(),
+        mode='markers',
+        marker=dict(size=12, color='rgba(0,0,0,0)', symbol='square'),
+        hoverinfo='none',
+        showlegend=False
     ))
     
     # Update layout to match MATLAB's `axis image`
@@ -308,16 +484,17 @@ st.subheader("Individual Frames")
 if img_row_obj and img_col_obj:
     ind_col1, ind_col2 = st.columns(2)
     with ind_col1:
-        st.image(img_row_obj, caption=f"Row Frame {frame_row}")
+        st.image(img_row_obj, caption=f"Fig. A: Row Frame {frame_row}")
     with ind_col2:
-        st.image(img_col_obj, caption=f"Col Frame {frame_col}")
+        st.image(img_col_obj, caption=f"Fig. B: Col Frame {frame_col}")
+        
 
 
 # ========================================================================
 # 5. LOOP CLOSURE MATCHES
 # ========================================================================
 st.divider()
-st.subheader("Loop Closure Matches")
+st.header("Retrival Results")
 
 # Define the path to the loop closure matches folder based on the selected sequence
 matches_dir = os.path.join(selected_seq["resultDir"], "loop_closure_matches")
@@ -335,9 +512,10 @@ if os.path.exists(matches_dir):
             # Place the first image in the left column
             with cols[0]:
                 img_path1 = os.path.join(matches_dir, match_images[i])
+
                 img1_obj = resolve_image(img_path1, is_dataset=False)
                 if img1_obj:
-                    st.image(img1_obj, caption=match_images[i], use_container_width=True)
+                    st.image(img1_obj, caption=f"Fig: {match_images[i]}", use_container_width=True)
                 else:
                     st.error(f"Could not load {match_images[i]}")
             
@@ -347,10 +525,22 @@ if os.path.exists(matches_dir):
                     img_path2 = os.path.join(matches_dir, match_images[i + 1])
                     img2_obj = resolve_image(img_path2, is_dataset=False)
                     if img2_obj:
-                        st.image(img2_obj, caption=match_images[i + 1], use_container_width=True)
+                        st.image(img2_obj, caption=f"Fig: {match_images[i + 1]}", use_container_width=True)
                     else:
                         st.error(f"Could not load {match_images[i+1]}")
     else:
         st.info("No images found in the loop_closure_matches folder.")
 else:
     st.info("No loop_closure_matches folder found for this sequence.")
+
+# ========================================================================
+# 6. GEOMETRY CHECK
+# ========================================================================
+st.divider()
+st.header("Geometry Check")
+
+st.markdown("#### GUI Output")
+render_dynamic_gallery("output_images")
+
+st.markdown("#### Overall Summary")
+render_dynamic_gallery("summary_images")
