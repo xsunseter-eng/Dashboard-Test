@@ -1,6 +1,8 @@
 import streamlit as st
 import scipy.io
 import plotly.graph_objects as pl
+import plotly.express as px
+import pandas as pd
 import numpy as np
 from PIL import Image
 import os
@@ -145,6 +147,42 @@ st.markdown("Use the **Image Comparison Slider**, manually configure frames, or 
 # Dropdown
 selected_seq_name = st.selectbox("Select a sequence", list(seq_dict.keys()))
 selected_seq = seq_dict[selected_seq_name]
+
+# ========================================================================
+# DASHBOARD SUMMARY & VIDEO (NEW GUI ELEMENTS)
+# ========================================================================
+st.divider()
+
+# 1. Full-width Video
+st.subheader("Loop closure gui")
+demo_video_url = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+st.video(demo_video_url)
+
+# 2. Figure and Table Side-by-Side
+summary_col1, summary_col2 = st.columns(2)
+
+try:
+    df_summary = pd.read_csv("dashboard_summary.csv")
+    
+    with summary_col1:
+        st.subheader("Figure")
+        df_summary["Pair"] = df_summary["Frame1"].astype(str) + " - " + df_summary["Frame2"].astype(str)
+        fig_summary = px.bar(
+            df_summary, 
+            x="Pair", 
+            y=["Raw Matches", "Fundamental Inliers", "Pose Inliers"],
+            barmode="group"
+        )
+        st.plotly_chart(fig_summary, use_container_width=True)
+        
+    with summary_col2:
+        st.subheader("Table")
+        st.dataframe(df_summary, use_container_width=True)
+except Exception as e:
+    st.warning(f"Could not load dashboard_summary.csv: {e}")
+
+st.divider()
+st.subheader("Image Retrival")
 
 # Load Data
 with st.spinner("Loading matrices..."):
@@ -379,7 +417,7 @@ if img_row_obj and img_col_obj:
 # 5. LOOP CLOSURE MATCHES
 # ========================================================================
 st.divider()
-st.subheader("Loop Closure Matches")
+st.subheader("Retrival Results")
 
 # Define the path to the loop closure matches folder based on the selected sequence
 matches_dir = os.path.join(selected_seq["resultDir"], "loop_closure_matches")
@@ -417,3 +455,15 @@ if os.path.exists(matches_dir):
         st.info("No images found in the loop_closure_matches folder.")
 else:
     st.info("No loop_closure_matches folder found for this sequence.")
+
+# ========================================================================
+# 6. GEOMETRY CHECK
+# ========================================================================
+st.divider()
+st.subheader("Geometry Check")
+
+st.markdown("#### GUI Output")
+st.image("https://via.placeholder.com/800x600.png?text=GUI+Output+Placeholder", use_container_width=True)
+
+st.markdown("#### Overall Summary")
+st.image("https://via.placeholder.com/800x600.png?text=Overall+Summary+Placeholder", use_container_width=True)
