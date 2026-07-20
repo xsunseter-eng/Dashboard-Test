@@ -266,7 +266,6 @@ frame_col = display_col * 12
 # ========================================================================
 # 1. IMAGE COMPARISON SLIDER 
 # ========================================================================
-st.divider()
 comp_col1, comp_col2 = st.columns(2)
 
 with comp_col2:
