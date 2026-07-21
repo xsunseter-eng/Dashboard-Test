@@ -7,3 +7,5 @@ streamlit-plotly-events
 huggingface_hub
 streamlit-image-comparison
 streamlit-echarts
+pandas
+pandas
