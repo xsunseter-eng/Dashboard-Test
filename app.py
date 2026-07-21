@@ -19,6 +19,17 @@ BASE_DIR = os.path.dirname(__file__)
 RESULTS_DIR = os.path.join(BASE_DIR, "Results")
 NETVLAD_DIR = BASE_DIR
 
+# ========================================================================
+# SEQUENCE VIDEO LINKS (HOCA BURADAN LİNKLERİ DÜZENLEYEBİLİR)
+# ========================================================================
+SEQUENCE_VIDEOS = {
+    "spot_indoor_obstacles": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_indoor_obstacles/spot_indoor_obstacles_rgb.mp4",
+    "spot_forest_hard": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_forest_hard/spot_forest_hard_rgb.mp4",
+    "spot_indoor_building_loop": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_indoor_building_loop/spot_indoor_building_loop_rgb.mp4",
+    "spot_outdoor_day_skatepark_1": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_outdoor_day_skatepark_1/spot_outdoor_day_skatepark_1_rgb.mp4",
+    "spot_outdoor_day_skatepark_2": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_outdoor_day_skatepark_2/spot_outdoor_day_skatepark_2_rgb.mp4",
+}
+
 def get_sequence_info(folder_name, version_dir):
     base_name = folder_name
     if base_name.startswith("realtime_results_v2_"):
@@ -30,7 +41,7 @@ def get_sequence_info(folder_name, version_dir):
         base_name = "spot_indoor_obstacles"
 
     image_dir = os.path.join(NETVLAD_DIR, f"{base_name}_data_images_rgb")
-    video_url = f"https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/{base_name}/{base_name}_rgb.mp4"
+    video_url = SEQUENCE_VIDEOS.get(base_name, f"https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/{base_name}/{base_name}_rgb.mp4")
     
     return {
         "name": folder_name,
@@ -538,5 +549,20 @@ for seq_name in seq_names:
 if all_csvs:
     master_df = pd.concat(all_csvs, ignore_index=True)
     st.dataframe(master_df, use_container_width=True)
+    
+    # Sort the dataframe by Coverage Frame1 (%) to make piecewise linear plots look correct
+    if "Coverage Frame1 (%)" in master_df.columns:
+        master_df_sorted = master_df.sort_values(by="Coverage Frame1 (%)")
+        
+        plot_col1, plot_col2 = st.columns(2)
+        with plot_col1:
+            if "Rotation Error (deg)" in master_df_sorted.columns:
+                fig1 = px.line(master_df_sorted, x="Coverage Frame1 (%)", y="Rotation Error (deg)", color="Sequence", markers=True, title="Rotation Error vs Coverage")
+                st.plotly_chart(fig1, use_container_width=True)
+            
+        with plot_col2:
+            if "Translation Error (deg)" in master_df_sorted.columns:
+                fig2 = px.line(master_df_sorted, x="Coverage Frame1 (%)", y="Translation Error (deg)", color="Sequence", markers=True, title="Translation Error vs Coverage")
+                st.plotly_chart(fig2, use_container_width=True)
 else:
     st.info("No dashboard_summary.csv files found in this version.")
