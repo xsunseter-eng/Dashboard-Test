@@ -36,7 +36,7 @@ SEQUENCE_VIDEOS = {
 GUI_VIDEOS = {
     "indoor_obstacles": "https://www.youtube.com/watch?v=0AtS6m-pwZI",
     "spot_forest_hard": "https://www.youtube.com/watch?v=MVPtSsw274s",
-    "spot_indoor_building_loop": "https://www.youtube.com/watch?v=oV3owInlcCY",
+    "spot_indoor_building_loop": "https://www.youtube.com/watch?v=oV3owInIcCY",
     "spot_outdoor_day_skatepark_1": "https://www.youtube.com/watch?v=M5C0eX6gyNo",
     "spot_outdoor_day_skatepark_2": "https://www.youtube.com/watch?v=v-4sAATWNE4",
 }
