@@ -23,11 +23,11 @@ NETVLAD_DIR = BASE_DIR
 # SEQUENCE VIDEO LINKS (HOCA BURADAN LİNKLERİ DÜZENLEYEBİLİR)
 # ========================================================================
 SEQUENCE_VIDEOS = {
-    "spot_indoor_obstacles": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_indoor_obstacles/spot_indoor_obstacles_rgb.mp4",
-    "spot_forest_hard": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_forest_hard/spot_forest_hard_rgb.mp4",
-    "spot_indoor_building_loop": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_indoor_building_loop/spot_indoor_building_loop_rgb.mp4",
-    "spot_outdoor_day_skatepark_1": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_outdoor_day_skatepark_1/spot_outdoor_day_skatepark_1_rgb.mp4",
-    "spot_outdoor_day_skatepark_2": "https://m3ed-dist.s3.us-west-2.amazonaws.com/processed/spot_outdoor_day_skatepark_2/spot_outdoor_day_skatepark_2_rgb.mp4",
+    "spot_indoor_obstacles": "https://www.youtube.com/watch?v=0AtS6m-pwZI",
+    "spot_forest_hard": "https://www.youtube.com/watch?v=MVPtSsw274s",
+    "spot_indoor_building_loop": "https://www.youtube.com/watch?v=oV3owInlcCY",
+    "spot_outdoor_day_skatepark_1": "https://www.youtube.com/watch?v=M5C0eX6gyNo",
+    "spot_outdoor_day_skatepark_2": "https://www.youtube.com/watch?v=PcSp6wdFgU8",
 }
 
 def get_sequence_info(folder_name, version_dir):
