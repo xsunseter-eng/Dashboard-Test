@@ -34,11 +34,11 @@ SEQUENCE_VIDEOS = {
 # GUI VIDEO LINKS (HOCA BURADAN LİNKLERİ DÜZENLEYEBİLİR)
 # ========================================================================
 GUI_VIDEOS = {
-    "spot_indoor_obstacles": "https://www.youtube.com/watch?v=0AtS6m-pwZI",
+    "indoor_obstacles": "https://www.youtube.com/watch?v=0AtS6m-pwZI",
     "spot_forest_hard": "https://www.youtube.com/watch?v=MVPtSsw274s",
     "spot_indoor_building_loop": "https://www.youtube.com/watch?v=oV3owInlcCY",
     "spot_outdoor_day_skatepark_1": "https://www.youtube.com/watch?v=M5C0eX6gyNo",
-    "spot_outdoor_day_skatepark_2": "https://www.youtube.com/watch?v=PcSp6wdFgU8",
+    "spot_outdoor_day_skatepark_2": "https://www.youtube.com/watch?v=A7dCw7ZlTIc",
 }
 
 def get_sequence_info(folder_name, version_dir):
