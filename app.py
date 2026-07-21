@@ -549,5 +549,20 @@ for seq_name in seq_names:
 if all_csvs:
     master_df = pd.concat(all_csvs, ignore_index=True)
     st.dataframe(master_df, use_container_width=True)
+    
+    # Sort the dataframe by Coverage Frame1 (%) to make piecewise linear plots look correct
+    if "Coverage Frame1 (%)" in master_df.columns:
+        master_df_sorted = master_df.sort_values(by="Coverage Frame1 (%)")
+        
+        plot_col1, plot_col2 = st.columns(2)
+        with plot_col1:
+            if "Rotation Error (deg)" in master_df_sorted.columns:
+                fig1 = px.line(master_df_sorted, x="Coverage Frame1 (%)", y="Rotation Error (deg)", color="Sequence", markers=True, title="Rotation Error vs Coverage")
+                st.plotly_chart(fig1, use_container_width=True)
+            
+        with plot_col2:
+            if "Translation Error (deg)" in master_df_sorted.columns:
+                fig2 = px.line(master_df_sorted, x="Coverage Frame1 (%)", y="Translation Error (deg)", color="Sequence", markers=True, title="Translation Error vs Coverage")
+                st.plotly_chart(fig2, use_container_width=True)
 else:
     st.info("No dashboard_summary.csv files found in this version.")
